@@ -90,15 +90,21 @@
 .pop .notice ul { display: inline; }
 .pop .notice li { display: inline; margin-left: 6px; }
 
-/* ---------- três colunas na altura da janela ---------- */
+/* ---------- ramais em cima, troncos e estacionamento embaixo, filas à direita ---------- */
 .pop .board {
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 330px) minmax(280px, 340px);
-  gap: 12px; margin-top: 10px; padding-bottom: 10px; min-height: 0;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: 14px; margin-top: 10px; padding-bottom: 10px; min-height: 0;
 }
-.pop .col { display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 0; }
-.pop .c-ext, .pop .c-q { gap: 0; }
+.pop .col { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.pop .c-left { gap: 12px; }
+.pop .c-ext { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 120px; }
+.pop .bottom {
+  flex: 0 1 auto; max-height: 42%; display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 14px; align-items: start; padding-top: 10px; border-top: 1px solid var(--line);
+}
+.pop .stack { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .pop .scroll { overflow-y: auto; min-height: 0; flex: 1 1 auto; scrollbar-width: thin; }
-.pop .c-mid.scroll { padding-right: 2px; }
+.pop .c-q .scroll { padding-right: 2px; }
 .pop .section-head { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; margin-bottom: 6px; min-height: 28px; }
 .pop .section-head h2 { font-size: 14px; font-weight: 700; margin-right: auto; white-space: nowrap; }
 .pop .section-head h2 span { font-weight: 500; color: var(--faint); font-size: 12.5px; margin-left: 5px; }
@@ -135,7 +141,7 @@
 .pop .badge { font-size: 10.5px; font-weight: 600; border-radius: 4px; padding: 0 4px; line-height: 15px; background: var(--line-soft); color: var(--muted); }
 .pop .badge.vm { background: var(--brand-soft); color: var(--brand-ink); }
 .pop .x-state { font-size: 12px; display: flex; gap: 5px; align-items: baseline; min-width: 0; }
-.pop .x-state b { font-weight: 600; flex: none; }
+.pop .x-state b { font-weight: 600; flex: 0 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pop .x-state .t { font-weight: 600; margin-left: auto; flex: none; }
 .pop .x-via { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .pop .x-peer { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -157,6 +163,42 @@
 .pop .x.st-offline .x-state b, .pop .x.st-unknown .x-state b, .pop .x.st-virtual .x-state b { color: var(--faint); font-weight: 500; }
 .pop .x.st-virtual { border-style: dashed; }
 
+/* Cinco tamanhos, escolhidos pelo JS: o maior que cabe na tela sem rolar.
+   O padrão (m) é o que vale enquanto o JS não decide. */
+.pop .exts[data-size="xl"] { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.pop .exts[data-size="xl"] .x { padding: 11px 13px 11px 17px; border-radius: 10px; gap: 2px; }
+.pop .exts[data-size="xl"] .x::before { width: 5px; }
+.pop .exts[data-size="xl"] .x-num { font-size: 17px; }
+.pop .exts[data-size="xl"] .x-name { font-size: 15px; }
+.pop .exts[data-size="xl"] .x-state { font-size: 13.5px; }
+.pop .exts[data-size="xl"] .x-peer, .pop .exts[data-size="xl"] .x-via { font-size: 12.5px; }
+
+.pop .exts[data-size="l"] { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 7px; }
+.pop .exts[data-size="l"] .x { padding: 8px 11px 8px 15px; border-radius: 9px; }
+.pop .exts[data-size="l"] .x::before { width: 5px; }
+.pop .exts[data-size="l"] .x-num { font-size: 15px; }
+.pop .exts[data-size="l"] .x-name { font-size: 13.5px; }
+.pop .exts[data-size="l"] .x-state { font-size: 12.5px; }
+.pop .exts[data-size="l"] .x-peer, .pop .exts[data-size="l"] .x-via { font-size: 12px; }
+
+.pop .exts[data-size="s"] { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 4px; }
+.pop .exts[data-size="s"] .x { padding: 4px 6px 4px 9px; border-radius: 6px; gap: 0; }
+.pop .exts[data-size="s"] .x::before { width: 3px; }
+.pop .exts[data-size="s"] .x-num { font-size: 12.5px; }
+.pop .exts[data-size="s"] .x-name { font-size: 11.5px; }
+.pop .exts[data-size="s"] .x-state { font-size: 11px; }
+.pop .exts[data-size="s"] .x-peer, .pop .exts[data-size="s"] .x-via { font-size: 10.5px; }
+.pop .exts[data-size="s"] .badge { font-size: 9.5px; line-height: 13px; }
+
+/* Centenas de ramais: número, nome e estado; o resto fica na cor e nos detalhes. */
+.pop .exts[data-size="xs"] { grid-template-columns: repeat(auto-fill, minmax(94px, 1fr)); gap: 3px; }
+.pop .exts[data-size="xs"] .x { padding: 2px 5px 2px 8px; border-radius: 5px; gap: 0; }
+.pop .exts[data-size="xs"] .x::before { width: 3px; }
+.pop .exts[data-size="xs"] .x-num { font-size: 12px; }
+.pop .exts[data-size="xs"] .x-name { font-size: 10.5px; }
+.pop .exts[data-size="xs"] .x-state { font-size: 10px; }
+.pop .exts[data-size="xs"] .x-peer, .pop .exts[data-size="xs"] .x-via, .pop .exts[data-size="xs"] .x-badges { display: none; }
+
 /* Tocando: o único movimento da página. Fica vermelho quando ninguém atende. */
 .pop .x.st-ringing { background: var(--ring-bg); border-color: var(--ring); animation: pop-ring 1.6s ease-in-out infinite; }
 .pop .x.st-ringing::before { background: var(--ring); }
@@ -169,28 +211,8 @@
   50% { box-shadow: 0 0 0 4px rgba(0,0,0,0); }
 }
 
-/* ---------- ligações agora ---------- */
-.pop .call {
-  display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: center;
-  padding: 5px 10px; border-bottom: 1px solid var(--line-soft); font-size: 12.5px;
-}
-.pop .call:last-child { border-bottom: 0; }
-.pop .dir { display: inline-flex; }
-.pop .dir svg { width: 15px; height: 15px; }
-.pop .dir.in svg { color: var(--ok); }
-.pop .dir.out svg { color: var(--brand); }
-.pop .dir.int svg { color: var(--faint); }
-.pop .parties { min-width: 0; }
-.pop .parties b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pop .parties .sub { display: block; font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pop .cstate { text-align: right; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
-.pop .cstate b { display: block; font-weight: 600; font-size: 12px; color: var(--ink); }
-.pop .c-ringing .cstate b { color: var(--ring); }
-.pop .c-queue .cstate b { color: var(--warn); }
-.pop .c-up .cstate b { color: var(--brand-ink); }
-
 /* ---------- troncos e conferências em etiquetas ---------- */
-.pop .chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.pop .chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 4px; }
 .pop .chips li {
   display: flex; align-items: center; gap: 6px; min-width: 0; padding: 4px 8px;
   background: var(--surface); border: 1px solid var(--line); border-radius: 7px; font-size: 12px;
@@ -289,21 +311,18 @@
 /* ---------- tela cheia (TV da recepção) ---------- */
 .pop:fullscreen { overflow: hidden; }
 
-/* ---------- telas menores: volta a rolar a página, em uma ou duas colunas ---------- */
+/* ---------- telas menores: volta a rolar a página, em uma coluna ---------- */
 @media (max-width: 1099px) {
-  .pop .board { grid-template-columns: minmax(0, 1fr) minmax(260px, 320px); }
-  .pop .c-ext { grid-column: 1 / -1; }
+  .pop .board { grid-template-columns: 1fr; }
   .pop .scroll { overflow: visible; }
+  .pop .bottom { max-height: none; }
 }
 @media (max-width: 700px) {
   .pop { padding: 8px 8px 0; }
-  .pop .board { grid-template-columns: 1fr; }
-  .pop .c-q { order: -1; }
-  .pop .c-ext { order: -2; }
+  .pop .bottom { grid-template-columns: 1fr; }
   .pop .metric { padding: 0 10px; }
   .pop .metric .note { display: none; }
   .pop .metric dd:not(.note) { font-size: 18px; }
-  .pop .exts { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
   .pop input.field { flex: 1; width: auto; min-width: 110px; }
   .pop .tb-side { margin-left: 0; }
 }
