@@ -14,7 +14,7 @@ Testado para Issabel 5, Asterisk 18, Rocky Linux 8, PHP 7.4. Sem dependências, 
 - **Troncos**: respondendo ou fora do ar, com latência e quantas ligações estão passando por cada um agora.
 - **Estacionamento** e **conferências**.
 - **Detalhes do ramal** num clique: IP, modelo do aparelho, latência, filas em que está, recados novos na caixa postal.
-- Tela cheia e tema escuro, para deixar numa TV da recepção.
+- Tela cheia, para deixar numa TV da recepção.
 
 ## Instalação
 
