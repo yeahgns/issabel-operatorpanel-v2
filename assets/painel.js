@@ -112,47 +112,53 @@
 
   /* ---------- estrutura fixa ---------- */
   root.innerHTML =
-    '<header class="topbar">' +
-      '<div class="brand"><h1>Painel do operador</h1><p id="pop-sub">Carregando…</p></div>' +
-      '<div class="top-actions">' +
+    '<header class="tb">' +
+      '<h1 class="tb-title">Painel do operador</h1>' +
+      '<dl class="metrics" id="pop-overview" aria-label="Resumo agora"></dl>' +
+      '<div class="tb-side">' +
+        '<span class="sub" id="pop-sub">Carregando…</span>' +
         '<label class="live" title="Atualiza a cada ' + (POLL_MS / 1000) + ' segundos">' +
           '<input type="checkbox" id="pop-live" checked><span class="live-dot" aria-hidden="true"></span><span>Ao vivo</span></label>' +
         '<button type="button" class="btn ghost" id="pop-theme">Tema escuro</button>' +
         '<button type="button" class="btn ghost" id="pop-full">Tela cheia</button>' +
       '</div>' +
     '</header>' +
-    '<main>' +
-      '<div id="pop-notices"></div>' +
-      '<section class="overview" id="pop-overview" aria-label="Resumo agora"><div class="loading">Lendo o estado do PABX…</div></section>' +
-      '<div class="board">' +
-        '<div class="col">' +
-          '<section aria-labelledby="pop-h-ext">' +
-            '<div class="section-head">' +
-              '<h2 id="pop-h-ext">Ramais<span id="pop-ext-count"></span></h2>' +
-              '<div class="seg" id="pop-filter" role="group" aria-label="Filtrar ramais por estado"></div>' +
-              '<label class="sr-only" for="pop-group">Grupo</label><select class="field" id="pop-group"><option value="">Todos os grupos</option></select>' +
-              '<label class="sr-only" for="pop-q">Buscar ramal</label><input type="search" class="field" id="pop-q" placeholder="Nome ou ramal" autocomplete="off">' +
-            '</div>' +
-            '<div class="exts" id="pop-exts"></div>' +
-          '</section>' +
-          '<section aria-labelledby="pop-h-calls">' +
-            '<div class="section-head"><h2 id="pop-h-calls">Ligações agora<span id="pop-call-count"></span></h2></div>' +
-            '<div class="panel" id="pop-calls"></div>' +
-          '</section>' +
-          '<div class="duo">' +
-            '<section aria-labelledby="pop-h-t"><div class="section-head"><h2 id="pop-h-t">Troncos</h2></div><div class="panel"><ul class="rows" id="pop-trunks"></ul></div></section>' +
-            '<div class="col">' +
-              '<section aria-labelledby="pop-h-p" id="pop-park-sec"><div class="section-head"><h2 id="pop-h-p">Estacionamento</h2></div><div class="panel" id="pop-park"></div></section>' +
-              '<section aria-labelledby="pop-h-c" id="pop-conf-sec" hidden><div class="section-head"><h2 id="pop-h-c">Conferências</h2></div><div class="panel"><ul class="rows" id="pop-confs"></ul></div></section>' +
-            '</div>' +
-          '</div>' +
+    '<div id="pop-notices"></div>' +
+    '<div class="board" id="pop-board">' +
+      '<section class="col c-ext" aria-labelledby="pop-h-ext">' +
+        '<div class="section-head">' +
+          '<h2 id="pop-h-ext">Ramais<span id="pop-ext-count"></span></h2>' +
+          '<div class="seg" id="pop-filter" role="group" aria-label="Filtrar ramais por estado"></div>' +
+          '<label class="sr-only" for="pop-group">Grupo</label><select class="field" id="pop-group"><option value="">Todos os grupos</option></select>' +
+          '<label class="sr-only" for="pop-q">Buscar ramal</label><input type="search" class="field" id="pop-q" placeholder="Nome ou ramal" autocomplete="off">' +
         '</div>' +
-        '<div class="col">' +
-          '<section aria-labelledby="pop-h-q"><div class="section-head"><h2 id="pop-h-q">Filas</h2></div><div class="queues" id="pop-queues"></div></section>' +
-        '</div>' +
+        '<div class="scroll"><div class="exts" id="pop-exts"></div></div>' +
+      '</section>' +
+      '<div class="col c-mid scroll">' +
+        '<section aria-labelledby="pop-h-calls">' +
+          '<div class="section-head"><h2 id="pop-h-calls">Ligações agora<span id="pop-call-count"></span></h2></div>' +
+          '<div class="panel" id="pop-calls"></div>' +
+        '</section>' +
+        '<section aria-labelledby="pop-h-t"><div class="section-head"><h2 id="pop-h-t">Troncos<span id="pop-trunk-count"></span></h2></div><ul class="chips" id="pop-trunks"></ul></section>' +
+        '<section aria-labelledby="pop-h-p" id="pop-park-sec"><div class="section-head"><h2 id="pop-h-p">Estacionamento</h2></div><div class="slots" id="pop-park"></div></section>' +
+        '<section aria-labelledby="pop-h-c" id="pop-conf-sec" hidden><div class="section-head"><h2 id="pop-h-c">Conferências</h2></div><ul class="chips" id="pop-confs"></ul></section>' +
       '</div>' +
-    '</main>' +
+      '<section class="col c-q" aria-labelledby="pop-h-q">' +
+        '<div class="section-head"><h2 id="pop-h-q">Filas<span id="pop-q-count"></span></h2></div>' +
+        '<div class="scroll"><div class="queues" id="pop-queues"></div></div>' +
+      '</section>' +
+    '</div>' +
     '<div id="pop-drawer"></div>';
+
+  /* Ocupa exatamente a altura da janela: a página não rola, só a coluna que não couber. */
+  function fit() {
+    var b = document.getElementById('pop-board');
+    if (!b) return;
+    if (window.innerWidth < 1100) { b.style.height = ''; return; }
+    var top = b.getBoundingClientRect().top + (document.fullscreenElement ? 0 : window.pageYOffset);
+    b.style.height = Math.max(360, window.innerHeight - top - 12) + 'px';
+  }
+  window.addEventListener('resize', fit);
 
   var $ = function (id) { return document.getElementById(id); };
   setTheme(storedTheme() || root.getAttribute('data-theme') || 'light', false);
@@ -177,11 +183,17 @@
   });
   document.addEventListener('fullscreenchange', function () {
     $('pop-full').textContent = document.fullscreenElement ? 'Sair da tela cheia' : 'Tela cheia';
+    setTimeout(fit, 50);
   });
   document.addEventListener('visibilitychange', function () { if (!document.hidden && S.live) poll(); });
   $('pop-exts').addEventListener('click', function (e) {
     var t = e.target.closest('[data-ext]');
     if (t) openDrawer(t.getAttribute('data-ext'), t);
+  });
+  $('pop-exts').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var t = e.target.closest('[data-ext]');
+    if (t) { e.preventDefault(); openDrawer(t.getAttribute('data-ext'), t); }
   });
   root.addEventListener('click', function (e) {
     if (e.target.closest('[data-retry]')) poll();
@@ -267,7 +279,7 @@
       h += '<div class="notice"><p>Parte do painel pode estar incompleta:<ul>' +
         d.warnings.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul></p></div>';
     }
-    $('pop-notices').innerHTML = h;
+    if ($('pop-notices').innerHTML !== h) { $('pop-notices').innerHTML = h; fit(); }
   }
 
   function visibleAll() {
@@ -307,17 +319,16 @@
 
     var ringLate = oldestRing && now - oldestRing > st.ring;
     var waitLate = oldestWait && now - oldestWait > st.sl;
-    $('pop-overview').innerHTML = '<dl class="metrics">' +
+    $('pop-overview').innerHTML =
       metric('Em ligação', nf(up), mix.join(', ') || 'nenhuma agora', '') +
       metric('Tocando', nf(ringing.length), oldestRing ? 'há ' + since(oldestRing, 'num') : 'nenhum ramal', ringLate ? 'alert' : (ringing.length ? 'ringing' : '')) +
       metric('Na fila', nf(waiting), oldestWait ? 'maior espera ' + since(oldestWait, 'num') : 'ninguém esperando', waitLate ? 'alert' : '') +
-      metric('Ramais online', nf(online) + '<small>de ' + nf(real.length) + '</small>', dnd ? plural(dnd, 'em não perturbe', 'em não perturbe') : 'com aparelho registrado', '') +
-      metric('Troncos', nf(tOn) + '<small>de ' + nf(trunks.length) + '</small>',
-        tOff.length ? 'fora do ar: ' + esc(tOff.map(function (t) { return t.label; }).join(', ')) : 'todos respondendo', tOff.length ? 'alert' : '') +
-      '</dl>';
+      metric('Ramais online', nf(online) + '<small>/' + nf(real.length) + '</small>', dnd ? plural(dnd, 'em não perturbe', 'em não perturbe') : 'registrados', '') +
+      metric('Troncos', nf(tOn) + '<small>/' + nf(trunks.length) + '</small>',
+        tOff.length ? 'fora: ' + esc(tOff.map(function (t) { return t.label; }).join(', ')) : 'todos respondendo', tOff.length ? 'alert' : '');
   }
   function metric(label, value, note, cls) {
-    return '<div class="metric ' + cls + '"><dt>' + label + '</dt><dd>' + value + '</dd><span class="note">' + note + '</span></div>';
+    return '<div class="metric ' + cls + '"><dt>' + label + '</dt><dd>' + value + '</dd><dd class="note">' + note + '</dd></div>';
   }
 
   function renderGroups() {
@@ -369,10 +380,6 @@
       t = since(c.since);
       var w3 = who(c.peer_num, c.peer_name, c.peer_ext);
       peer = c.peer_num || c.peer_ext ? 'para <strong>' + esc(w3.main) + '</strong>' : '';
-    } else if (e.state === 'dnd') {
-      peer = 'Não recebe ligações';
-    } else if (e.state === 'offline') {
-      peer = 'Aparelho não registrado';
     }
     return { t: t, peer: peer, late: late, via: via };
   }
@@ -385,7 +392,7 @@
     return '<span class="x-top"><span class="x-num">' + esc(e.ext) + '</span><span class="x-name">' + esc(e.name || '') + '</span>' +
       (badges ? '<span class="x-badges">' + badges + '</span>' : '') + '</span>' +
       '<span class="x-state" ' + ring + '><b>' + (LABEL[e.state] || e.state) + '</b>' + ts.via + ts.t + '</span>' +
-      '<span class="x-peer">' + (ts.peer || '&nbsp;') + '</span>';
+      (ts.peer ? '<span class="x-peer">' + ts.peer + '</span>' : '');
   }
 
   function renderExts() {
@@ -422,8 +429,9 @@
     list.forEach(function (e) {
       var el = S.tiles[e.ext];
       if (!el) {
-        el = document.createElement('button');
-        el.type = 'button';
+        el = document.createElement('div');
+        el.setAttribute('role', 'button');
+        el.setAttribute('tabindex', '0');
         el.setAttribute('data-ext', e.ext);
         S.tiles[e.ext] = el;
       }
@@ -453,7 +461,7 @@
     var calls = S.data.calls || [];
     $('pop-call-count').textContent = calls.length ? nf(calls.length) : '';
     if (!calls.length) {
-      $('pop-calls').innerHTML = '<p class="empty"><b>Nenhuma ligação agora.</b>Quando alguém ligar ou um ramal discar, a ligação aparece aqui.</p>';
+      $('pop-calls').innerHTML = '<p class="empty">Nenhuma ligação agora.</p>';
       return;
     }
     $('pop-calls').innerHTML = calls.map(function (c) {
@@ -461,20 +469,18 @@
       var tos = (c.to || []).map(function (p) { return partyHtml(p).main; }).filter(Boolean);
       var line2;
       if (c.state === 'ringing') line2 = 'tocando em ' + joinPt(tos);
-      else if (c.state === 'queue') line2 = 'esperando na fila';
-      else if (c.state === 'ivr') line2 = 'ouvindo o menu de atendimento';
+      else if (c.state === 'queue') line2 = 'esperando';
+      else if (c.state === 'ivr') line2 = 'no menu de atendimento';
       else if (c.state === 'app' && c.to && c.to[0] && !c.to[0].ext) line2 = 'na ' + esc(String(c.to[0].name || 'aplicação').toLowerCase());
       else if (tos.length) line2 = 'com ' + joinPt(tos);
       else line2 = from.sub;
       var via = [];
-      if (c.queue) via.push('Fila ' + esc(queueName(c.queue)));
-      if (c.trunk) via.push(esc(trunkName(c.trunk)));
+      if (c.queue) via.push('fila ' + esc(queueName(c.queue)));
+      else if (c.trunk) via.push(esc(trunkName(c.trunk)));
       var t = c.state === 'up' ? (c.answered_at || c.since) : c.since;
       return '<div class="call c-' + c.state + '">' +
-        '<span class="dir ' + c.dir + '">' + ICON[c.dir] + DIR[c.dir] + '</span>' +
-        '<div class="parties"><span><b>' + from.main + '</b>' + (from.sub && c.state === 'up' ? ' <span class="sub">' + from.sub + '</span>' : '') + '</span>' +
-          '<span class="sub">' + line2 + '</span></div>' +
-        '<div class="via">' + (via.length ? via.map(function (v) { return '<span>' + v + '</span>'; }).join('') : '<span>Entre ramais</span>') + '</div>' +
+        '<span class="dir ' + c.dir + '" title="' + DIR[c.dir] + '">' + ICON[c.dir] + '<span class="sr-only">' + DIR[c.dir] + '</span></span>' +
+        '<div class="parties"><b>' + from.main + '</b><span class="sub">' + [line2].concat(via).filter(Boolean).join(', ') + '</span></div>' +
         '<div class="cstate"><b>' + (CSTATE[c.state] || c.state) + '</b>' + since(t, 'num') + '</div>' +
       '</div>';
     }).join('');
@@ -485,25 +491,28 @@
 
   function renderQueues() {
     var qs = S.data.queues || [], st = settings(), now = nowSrv();
+    var waitingAll = 0;
+    qs.forEach(function (q) { waitingAll += q.waiting.length; });
+    $('pop-q-count').textContent = qs.length ? nf(qs.length) : '';
     if (!qs.length) {
-      $('pop-queues').innerHTML = '<div class="panel"><p class="empty"><b>Nenhuma fila cadastrada.</b>As filas criadas no PABX aparecem aqui com quem está esperando.</p></div>';
+      $('pop-queues').innerHTML = '<p class="empty panel">Nenhuma fila cadastrada no PABX.</p>';
       return;
     }
     $('pop-queues').innerHTML = qs.map(function (q) {
-      var oldest = q.waiting.length ? q.waiting[0].since : null;
-      q.waiting.forEach(function (w) { if (w.since < oldest) oldest = w.since; });
+      var oldest = null;
+      q.waiting.forEach(function (w) { if (!oldest || w.since < oldest) oldest = w.since; });
       var late = oldest && now - oldest > st.sl;
       var h = '<article class="queue ' + (q.waiting.length ? (late ? 'q-late' : 'q-ok') : '') + '"' +
         (oldest ? ' data-oldest="' + oldest + '" data-sl="' + st.sl + '"' : '') + '>' +
-        '<div class="q-top"><div class="q-name"><b>' + esc(q.name || 'Fila ' + q.num) + '</b><span>Fila ' + esc(q.num) +
-          (q.talking ? ', ' + plural(q.talking, 'em atendimento', 'em atendimento') : '') + '</span></div>' +
-        '<div class="q-wait"><strong>' + q.waiting.length + '</strong><span>esperando</span></div></div>';
+        '<div class="q-top"><b>' + esc(q.name || 'Fila ' + q.num) + '</b><span class="q-num">' + esc(q.num) + '</span>' +
+        (q.talking ? '<span class="q-talk">' + plural(q.talking, 'em atendimento', 'em atendimento') + '</span>' : '') +
+        '<span class="q-wait"><strong>' + q.waiting.length + '</strong> esperando</span></div>';
       if (q.waiting.length) {
-        h += '<ul class="callers">' + q.waiting.slice(0, 6).map(function (w) {
+        h += '<ul class="callers">' + q.waiting.slice(0, 5).map(function (w) {
           var ww = who(w.num, w.name, null);
           return '<li><span><span class="pos">' + w.pos + 'º</span>' + esc(ww.main) + (ww.sub ? ' <span class="pos">' + esc(ww.sub) + '</span>' : '') + '</span>' +
             since(w.since, now - w.since > st.sl ? 'late' : 'num') + '</li>';
-        }).join('') + (q.waiting.length > 6 ? '<li><span class="pos">e mais ' + (q.waiting.length - 6) + '</span></li>' : '') + '</ul>';
+        }).join('') + (q.waiting.length > 5 ? '<li><span class="pos">e mais ' + (q.waiting.length - 5) + '</span></li>' : '') + '</ul>';
       }
       if (q.members.length) {
         h += '<div class="members" aria-label="Quem atende esta fila">' + q.members.map(function (m) {
@@ -514,19 +523,19 @@
             (m.status === 'paused' ? ' <em>' + esc(m.pause_reason || 'pausa') + '</em>' : '') + '</span></span>';
         }).join('') + '</div>';
       } else {
-        h += '<p class="q-today" style="border:0;padding:0">Ninguém atendendo esta fila agora.</p>';
+        h += '<p class="q-today">Ninguém atendendo esta fila agora.</p>';
       }
-      if (q.today) {
-        var t = q.today;
+      var t = q.today || null, sr = q.since_reset;
+      if (t) {
         h += '<p class="q-today">' +
-          '<span>Atendidas hoje <b>' + nf(t.answered) + '</b></span>' +
+          '<span>Atendidas <b>' + nf(t.answered) + '</b></span>' +
           '<span class="' + (t.lost ? 'bad' : '') + '">Perdidas <b>' + nf(t.lost) + '</b></span>' +
           (t.sla_pct != null ? '<span title="Atendidas em até ' + st.sl + ' segundos de espera">No prazo <b>' + t.sla_pct + '%</b></span>' : '') +
-          (t.avg_wait != null ? '<span>Espera média <b>' + clock(t.avg_wait) + '</b></span>' : '') +
+          (t.avg_wait != null ? '<span title="Espera média até atender">Espera <b>' + clock(t.avg_wait) + '</b></span>' : '') +
           '</p>';
-      } else if (q.since_reset) {
-        h += '<p class="q-today" title="Contagem do Asterisk desde o último reset ou reinício"><span>Atendidas <b>' + nf(q.since_reset.answered) + '</b></span>' +
-          '<span class="' + (q.since_reset.lost ? 'bad' : '') + '">Perdidas <b>' + nf(q.since_reset.lost) + '</b></span><span>desde o último reinício</span></p>';
+      } else if (sr) {
+        h += '<p class="q-today" title="Contagem do Asterisk desde o último reinício"><span>Atendidas <b>' + nf(sr.answered) + '</b></span>' +
+          '<span class="' + (sr.lost ? 'bad' : '') + '">Perdidas <b>' + nf(sr.lost) + '</b></span></p>';
       }
       return h + '</article>';
     }).join('');
@@ -538,11 +547,16 @@
     var ts = (S.data.trunks || []).slice().sort(function (a, b) {
       return (a.status === 'disabled') - (b.status === 'disabled');
     });
-    if (!ts.length) { $('pop-trunks').innerHTML = '<li><span class="main"><span>Nenhum tronco cadastrado.</span></span></li>'; return; }
+    var on = ts.filter(function (t) { return t.status === 'online' || t.status === 'warn'; }).length;
+    var all = ts.filter(function (t) { return t.status !== 'disabled'; }).length;
+    $('pop-trunk-count').textContent = all ? on + ' de ' + all : '';
+    if (!ts.length) { $('pop-trunks').innerHTML = '<li class="empty">Nenhum tronco cadastrado.</li>'; return; }
     $('pop-trunks').innerHTML = ts.map(function (t) {
-      return '<li class="t-' + t.status + '"><span class="dot ' + (TSTATE[t.status] || '') + '" aria-hidden="true"></span>' +
-        '<span class="main"><b>' + esc(t.label) + '</b><span>' + esc(t.detail) + (t.rtt_ms != null ? ', ' + t.rtt_ms + ' ms' : '') + '</span></span>' +
-        '<span class="side">' + (t.calls ? '<b>' + t.calls + '</b>' + (t.calls === 1 ? 'ligação' : 'ligações') : '<span title="' + esc(t.channel) + '">livre</span>') + '</span></li>';
+      var title = t.label + ' (' + t.channel + '): ' + t.detail + (t.rtt_ms != null ? ', ' + t.rtt_ms + ' ms' : '') +
+        (t.calls ? ', ' + plural(t.calls, 'ligação', 'ligações') + ' agora' : '');
+      return '<li class="t-' + t.status + '" title="' + esc(title) + '"><span class="dot ' + (TSTATE[t.status] || '') + '" aria-hidden="true"></span>' +
+        '<span class="cl">' + esc(t.label) + '</span>' +
+        (t.status === 'offline' ? '<span class="cn bad">fora</span>' : (t.calls ? '<span class="cn">' + t.calls + '</span>' : '')) + '</li>';
     }).join('');
   }
 
@@ -550,13 +564,13 @@
     var slots = S.data.parking || [], now = nowSrv();
     $('pop-park-sec').hidden = !slots.length;
     if (!slots.length) return;
-    $('pop-park').innerHTML = '<div class="slots">' + slots.map(function (s) {
+    $('pop-park').innerHTML = slots.map(function (s) {
       if (!s.call) return '<div class="slot"><b>' + esc(s.space) + '</b>livre</div>';
       var w = who(s.call.num, s.call.name, null);
       var late = s.call.timeout_at && now > s.call.timeout_at - 10;
-      return '<div class="slot busy' + (late ? ' late' : '') + '" title="' + (s.call.by ? 'Estacionada pelo ramal ' + esc(s.call.by) : '') + '">' +
+      return '<div class="slot busy' + (late ? ' late' : '') + '" title="' + esc(w.main) + (s.call.by ? ', estacionada pelo ramal ' + esc(s.call.by) : '') + '">' +
         '<b>' + esc(s.space) + '</b>' + since(s.call.since) + '<span class="who">' + esc(w.main) + '</span></div>';
-    }).join('') + '</div>';
+    }).join('');
   }
 
   function renderConfs() {
@@ -564,9 +578,9 @@
     $('pop-conf-sec').hidden = !cs.length;
     if (!cs.length) return;
     $('pop-confs').innerHTML = cs.map(function (c) {
-      return '<li><span class="dot ' + (c.parties ? 'online' : '') + '" aria-hidden="true"></span><span class="main"><b>' + esc(c.name || 'Sala ' + c.num) +
-        '</b><span>Ramal ' + esc(c.num) + '</span></span><span class="side">' +
-        (c.parties ? '<b>' + c.parties + '</b>' + (c.parties === 1 ? 'pessoa' : 'pessoas') : 'vazia') + '</span></li>';
+      return '<li title="Ramal ' + esc(c.num) + '"><span class="dot ' + (c.parties ? 'online' : '') + '" aria-hidden="true"></span>' +
+        '<span class="cl">' + esc(c.name || 'Sala ' + c.num) + '</span>' +
+        (c.parties ? '<span class="cn">' + c.parties + '</span>' : '<span class="cn muted">vazia</span>') + '</li>';
     }).join('');
   }
 
@@ -658,5 +672,6 @@
   }
 
   setInterval(tick, 1000);
+  fit();
   poll();
 })();
