@@ -560,17 +560,36 @@
     }).join('');
   }
 
+  /* "701, 702, 703, 704, 70001..." -> "701–704, 70001–70050" */
+  function ranges(nums) {
+    var n = nums.map(Number).filter(function (x) { return !isNaN(x); }).sort(function (a, b) { return a - b; });
+    var out = [], a = null, p = null;
+    n.forEach(function (x) {
+      if (a === null) { a = p = x; return; }
+      if (x === p + 1) { p = x; return; }
+      out.push(a === p ? String(a) : a + '–' + p); a = p = x;
+    });
+    if (a !== null) out.push(a === p ? String(a) : a + '–' + p);
+    return out.join(', ');
+  }
+
+  /* Só as vagas ocupadas viram cartão; as livres cabem numa linha (há PABX com 50+ vagas). */
   function renderParking() {
     var slots = S.data.parking || [], now = nowSrv();
     $('pop-park-sec').hidden = !slots.length;
     if (!slots.length) return;
-    $('pop-park').innerHTML = slots.map(function (s) {
-      if (!s.call) return '<div class="slot"><b>' + esc(s.space) + '</b>livre</div>';
+    var busy = slots.filter(function (s) { return s.call; });
+    var free = slots.filter(function (s) { return !s.call; });
+    var h = busy.map(function (s) {
       var w = who(s.call.num, s.call.name, null);
       var late = s.call.timeout_at && now > s.call.timeout_at - 10;
       return '<div class="slot busy' + (late ? ' late' : '') + '" title="' + esc(w.main) + (s.call.by ? ', estacionada pelo ramal ' + esc(s.call.by) : '') + '">' +
         '<b>' + esc(s.space) + '</b>' + since(s.call.since) + '<span class="who">' + esc(w.main) + '</span></div>';
     }).join('');
+    var freeTxt = !free.length ? 'Nenhuma vaga livre.'
+      : (busy.length ? plural(free.length, 'vaga livre', 'vagas livres') : 'Nenhuma ligação estacionada, ' + plural(free.length, 'vaga livre', 'vagas livres')) +
+        ': <span>' + esc(ranges(free.map(function (s) { return s.space; }))) + '</span>';
+    $('pop-park').innerHTML = h + '<p class="park-free">' + freeTxt + '</p>';
   }
 
   function renderConfs() {
