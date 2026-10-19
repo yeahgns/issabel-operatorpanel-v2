@@ -7,12 +7,12 @@ Testado para Issabel 5, Asterisk 18, Rocky Linux 8, PHP 7.4. Sem dependências, 
 ## O que ele mostra
 
 - **Ramais** sempre na mesma posição (ordem de número, nunca de estado), para a telefonista achar cada pessoa sem procurar. Cada ramal diz o estado, há quanto tempo, e com quem está falando ou quem está ligando, com o nome da fila quando a ligação veio por uma.
+- **Tamanho automático**: com poucos ramais os cartões ficam grandes; com muitos, encolhem até caber na tela. Com centenas de ramais fica o tamanho menor (número, nome e estado) e a lista rola.
 - **Ramal tocando pulsa**, e fica vermelho quando ninguém atende há mais de 20 segundos. É o único movimento da tela.
 - **Filtros** por estado (livres, em ligação, tocando, offline), por grupo (por padrão, um grupo por fila) e busca por nome ou número.
-- **Ligações agora**: entrando, saindo e internas, com fila, tronco, estado (tocando, na fila, na URA, em ligação) e duração.
 - **Filas**: quem está esperando e há quanto tempo, quem atende (livre, ocupado, tocando, em pausa com o motivo) e os números do dia: atendidas, perdidas, porcentagem atendida no prazo e espera média.
-- **Troncos**: respondendo ou fora do ar, com latência e quantas ligações estão passando por cada um agora.
-- **Estacionamento** e **conferências**.
+- **Troncos**, embaixo dos ramais como no painel original: respondendo ou fora do ar, com latência e quantas ligações estão passando por cada um agora.
+- **Estacionamento** (só as vagas ocupadas aparecem; as livres viram um resumo) e **conferências**.
 - **Detalhes do ramal** num clique: IP, modelo do aparelho, latência, filas em que está, recados novos na caixa postal.
 - Tela cheia, para deixar numa TV da recepção.
 
