@@ -101,15 +101,6 @@
   };
   var DIR = { in: 'Entrando', out: 'Saindo', int: 'Interna' };
 
-  /* ---------- tema ---------- */
-  function storedTheme() { try { return localStorage.getItem('pop-theme'); } catch (e) { return null; } }
-  function setTheme(t, save) {
-    root.setAttribute('data-theme', t);
-    var b = document.getElementById('pop-theme');
-    if (b) b.textContent = t === 'dark' ? 'Tema claro' : 'Tema escuro';
-    if (save) { try { localStorage.setItem('pop-theme', t); } catch (e) { /* sem storage */ } }
-  }
-
   /* ---------- estrutura fixa ---------- */
   root.innerHTML =
     '<header class="tb">' +
@@ -119,7 +110,6 @@
         '<span class="sub" id="pop-sub">Carregando…</span>' +
         '<label class="live" title="Atualiza a cada ' + (POLL_MS / 1000) + ' segundos">' +
           '<input type="checkbox" id="pop-live" checked><span class="live-dot" aria-hidden="true"></span><span>Ao vivo</span></label>' +
-        '<button type="button" class="btn ghost" id="pop-theme">Tema escuro</button>' +
         '<button type="button" class="btn ghost" id="pop-full">Tela cheia</button>' +
       '</div>' +
     '</header>' +
@@ -161,7 +151,6 @@
   window.addEventListener('resize', fit);
 
   var $ = function (id) { return document.getElementById(id); };
-  setTheme(storedTheme() || root.getAttribute('data-theme') || 'light', false);
 
   $('pop-q').addEventListener('input', function () { S.q = this.value.trim().toLowerCase(); renderExts(); });
   $('pop-group').addEventListener('change', function () { S.group = this.value; renderExts(); });
@@ -176,7 +165,6 @@
     if (S.live) poll(); else clearTimeout(S.timer);
     renderSub();
   });
-  $('pop-theme').addEventListener('click', function () { setTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark', true); });
   $('pop-full').addEventListener('click', function () {
     if (document.fullscreenElement) document.exitFullscreen();
     else if (root.requestFullscreen) root.requestFullscreen();
@@ -649,18 +637,30 @@
     dev += '<dt>Tecnologia</dt><dd>' + esc((e.tech || '').toUpperCase()) + '</dd>';
     if (e.vm_new != null) dev += '<dt>Caixa postal</dt><dd>' + (e.vm_new ? plural(e.vm_new, 'recado novo', 'recados novos') : 'sem recados novos') + '</dd>';
 
-    $('pop-drawer').innerHTML =
-      '<div class="scrim" data-close></div>' +
-      '<aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="pop-d-title">' +
-        '<div class="d-head"><h2 id="pop-d-title">' + esc(e.name || 'Ramal ' + e.ext) + '<span>Ramal ' + esc(e.ext) + '</span></h2>' +
-          '<button type="button" class="btn ghost" data-close>Fechar</button></div>' +
-        '<div class="d-body">' +
-          '<div><span class="d-state"><span class="dot s-' + e.state + '" aria-hidden="true"></span>' + (LABEL[e.state] || e.state) + '</span></div>' +
-          (calls ? '<section><h3>Ligação agora</h3><ul class="d-list">' + calls + '</ul></section>' : '') +
-          (queues ? '<section><h3>Filas</h3><ul class="d-list">' + queues + '</ul></section>' : '') +
-          '<section><h3>Aparelho</h3><dl class="kv">' + dev + '</dl></section>' +
-        '</div>' +
-      '</aside>';
+    var title = esc(e.name || 'Ramal ' + e.ext) + '<span>Ramal ' + esc(e.ext) + '</span>';
+    var body =
+      '<div><span class="d-state"><span class="dot s-' + e.state + '" aria-hidden="true"></span>' + (LABEL[e.state] || e.state) + '</span></div>' +
+      (calls ? '<section><h3>Ligação agora</h3><ul class="d-list">' + calls + '</ul></section>' : '') +
+      (queues ? '<section><h3>Filas</h3><ul class="d-list">' + queues + '</ul></section>' : '') +
+      '<section><h3>Aparelho</h3><dl class="kv">' + dev + '</dl></section>';
+
+    // A gaveta é criada uma vez ao abrir; nas atualizações só o conteúdo muda.
+    // Recriar tudo repetia a animação de entrada, voltava a rolagem ao topo e tirava o foco.
+    var box = $('pop-drawer'), aside = box.querySelector('.drawer');
+    if (!aside || aside.getAttribute('data-ext') !== e.ext) {
+      box.innerHTML =
+        '<div class="scrim" data-close></div>' +
+        '<aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="pop-d-title" data-ext="' + esc(e.ext) + '">' +
+          '<div class="d-head"><h2 id="pop-d-title"></h2><button type="button" class="btn ghost" data-close>Fechar</button></div>' +
+          '<div class="d-body"></div>' +
+        '</aside>';
+      aside = box.querySelector('.drawer');
+    }
+    var h2 = aside.querySelector('#pop-d-title'), b = aside.querySelector('.d-body');
+    if (h2._h !== title) { h2.innerHTML = title; h2._h = title; }
+    // Os cronômetros já andam sozinhos (tick); compara sem eles para não reescrever a cada ciclo.
+    var key = body.replace(/(data-since="[^"]*">)[^<]*/g, '$1');
+    if (b._k !== key) { b.innerHTML = body; b._k = key; }
   }
 
   /* ---------- cronômetros ---------- */
