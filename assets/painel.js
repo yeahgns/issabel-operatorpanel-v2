@@ -67,10 +67,6 @@
     if (!ts) return '';
     return '<span class="' + (cls || 't') + '" data-since="' + ts + '">' + clock(nowSrv() - ts) + '</span>';
   }
-  function joinPt(arr) {
-    if (arr.length <= 1) return arr.join('');
-    return arr.slice(0, -1).join(', ') + ' e ' + arr[arr.length - 1];
-  }
   function settings() {
     var s = (S.data && S.data.settings) || {};
     return { sl: s.service_level_seconds || 20, ring: s.long_ring_seconds || 20 };
@@ -94,12 +90,8 @@
   }
 
   var ICON = {
-    in: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4 4 12M4 6.5V12h5.5"/></svg>',
-    out: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12 12 4M6.5 4H12v5.5"/></svg>',
-    int: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5h9.5L10 3M13 10.5H3.5L6 13"/></svg>',
     vm: '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" style="vertical-align:-1px;margin-right:3px"><rect x="2" y="3.5" width="12" height="9" rx="1.5"/><path d="m2.6 4.6 5.4 4 5.4-4"/></svg>'
   };
-  var DIR = { in: 'Entrando', out: 'Saindo', int: 'Interna' };
 
   /* ---------- estrutura fixa ---------- */
   root.innerHTML =
@@ -115,23 +107,23 @@
     '</header>' +
     '<div id="pop-notices"></div>' +
     '<div class="board" id="pop-board">' +
-      '<section class="col c-ext" aria-labelledby="pop-h-ext">' +
-        '<div class="section-head">' +
-          '<h2 id="pop-h-ext">Ramais<span id="pop-ext-count"></span></h2>' +
-          '<div class="seg" id="pop-filter" role="group" aria-label="Filtrar ramais por estado"></div>' +
-          '<label class="sr-only" for="pop-group">Grupo</label><select class="field" id="pop-group"><option value="">Todos os grupos</option></select>' +
-          '<label class="sr-only" for="pop-q">Buscar ramal</label><input type="search" class="field" id="pop-q" placeholder="Nome ou ramal" autocomplete="off">' +
-        '</div>' +
-        '<div class="scroll"><div class="exts" id="pop-exts"></div></div>' +
-      '</section>' +
-      '<div class="col c-mid scroll">' +
-        '<section aria-labelledby="pop-h-calls">' +
-          '<div class="section-head"><h2 id="pop-h-calls">Ligações agora<span id="pop-call-count"></span></h2></div>' +
-          '<div class="panel" id="pop-calls"></div>' +
+      '<div class="col c-left">' +
+        '<section class="c-ext" aria-labelledby="pop-h-ext">' +
+          '<div class="section-head">' +
+            '<h2 id="pop-h-ext">Ramais<span id="pop-ext-count"></span></h2>' +
+            '<div class="seg" id="pop-filter" role="group" aria-label="Filtrar ramais por estado"></div>' +
+            '<label class="sr-only" for="pop-group">Grupo</label><select class="field" id="pop-group"><option value="">Todos os grupos</option></select>' +
+            '<label class="sr-only" for="pop-q">Buscar ramal</label><input type="search" class="field" id="pop-q" placeholder="Nome ou ramal" autocomplete="off">' +
+          '</div>' +
+          '<div class="scroll" id="pop-ext-scroll"><div class="exts" id="pop-exts" data-size="m"></div></div>' +
         '</section>' +
-        '<section aria-labelledby="pop-h-t"><div class="section-head"><h2 id="pop-h-t">Troncos<span id="pop-trunk-count"></span></h2></div><ul class="chips" id="pop-trunks"></ul></section>' +
-        '<section aria-labelledby="pop-h-p" id="pop-park-sec"><div class="section-head"><h2 id="pop-h-p">Estacionamento</h2></div><div class="slots" id="pop-park"></div></section>' +
-        '<section aria-labelledby="pop-h-c" id="pop-conf-sec" hidden><div class="section-head"><h2 id="pop-h-c">Conferências</h2></div><ul class="chips" id="pop-confs"></ul></section>' +
+        '<div class="bottom scroll">' +
+          '<section aria-labelledby="pop-h-t"><div class="section-head"><h2 id="pop-h-t">Troncos<span id="pop-trunk-count"></span></h2></div><ul class="chips" id="pop-trunks"></ul></section>' +
+          '<div class="stack">' +
+            '<section aria-labelledby="pop-h-p" id="pop-park-sec"><div class="section-head"><h2 id="pop-h-p">Estacionamento</h2></div><div class="slots" id="pop-park"></div></section>' +
+            '<section aria-labelledby="pop-h-c" id="pop-conf-sec" hidden><div class="section-head"><h2 id="pop-h-c">Conferências</h2></div><ul class="chips" id="pop-confs"></ul></section>' +
+          '</div>' +
+        '</div>' +
       '</div>' +
       '<section class="col c-q" aria-labelledby="pop-h-q">' +
         '<div class="section-head"><h2 id="pop-h-q">Filas<span id="pop-q-count"></span></h2></div>' +
@@ -148,7 +140,33 @@
     var top = b.getBoundingClientRect().top + (document.fullscreenElement ? 0 : window.pageYOffset);
     b.style.height = Math.max(360, window.innerHeight - top - 12) + 'px';
   }
-  window.addEventListener('resize', fit);
+  window.addEventListener('resize', function () { fit(); sizeExts(); });
+
+  /*
+   * Tamanho dos cartões de ramal: do maior para o menor, fica o maior que cabe sem rolar.
+   * Com muitos ramais (centenas) nenhum cabe e fica o menor, com rolagem.
+   * Só reavalia quando muda a quantidade visível ou o espaço, não a cada atualização,
+   * para os cartões não ficarem pulando de tamanho quando um ramal começa a tocar.
+   */
+  var SIZES = ['xl', 'l', 'm', 's', 'xs'];
+  function sizeExts(force) {
+    var box = document.getElementById('pop-exts'), sc = document.getElementById('pop-ext-scroll');
+    if (!box || !sc) return;
+    var n = box.querySelectorAll('[data-ext]').length;
+    var constrained = window.innerWidth >= 1100;
+    var key = n + '|' + sc.clientWidth + '|' + (constrained ? sc.clientHeight : 0);
+    if (!force && S.sizeKey === key) return;
+    S.sizeKey = key;
+    if (!constrained) {   // tela estreita: a página rola, escolhe só pela quantidade
+      box.setAttribute('data-size', n > 200 ? 's' : (n > 60 ? 'm' : 'l'));
+      return;
+    }
+    for (var i = 0; i < SIZES.length; i++) {
+      box.setAttribute('data-size', SIZES[i]);
+      if (sc.scrollHeight <= sc.clientHeight + 1) return;
+    }
+  }
+
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -171,7 +189,7 @@
   });
   document.addEventListener('fullscreenchange', function () {
     $('pop-full').textContent = document.fullscreenElement ? 'Sair da tela cheia' : 'Tela cheia';
-    setTimeout(fit, 50);
+    setTimeout(function () { fit(); sizeExts(true); }, 50);
   });
   document.addEventListener('visibilitychange', function () { if (!document.hidden && S.live) poll(); });
   $('pop-exts').addEventListener('click', function (e) {
@@ -232,11 +250,11 @@
     renderOverview();
     renderGroups();
     renderExts();
-    renderCalls();
     renderQueues();
     renderTrunks();
     renderParking();
     renderConfs();
+    sizeExts();
     if (S.open) renderDrawer();
   }
 
@@ -267,7 +285,7 @@
       h += '<div class="notice"><p>Parte do painel pode estar incompleta:<ul>' +
         d.warnings.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul></p></div>';
     }
-    if ($('pop-notices').innerHTML !== h) { $('pop-notices').innerHTML = h; fit(); }
+    if ($('pop-notices').innerHTML !== h) { $('pop-notices').innerHTML = h; fit(); sizeExts(); }
   }
 
   function visibleAll() {
@@ -435,44 +453,11 @@
     Object.keys(S.tiles).forEach(function (k) {
       if (!seen[k]) { if (S.tiles[k].parentNode) S.tiles[k].parentNode.removeChild(S.tiles[k]); delete S.tiles[k]; }
     });
+    sizeExts();
   }
 
   /* ---------- ligações ---------- */
-  function partyHtml(p) {
-    if (!p) return { main: '', sub: '' };
-    var w = who(p.num, p.name, p.ext);
-    return { main: esc(w.main), sub: esc(w.sub) };
-  }
   var CSTATE = { up: 'Em ligação', ringing: 'Tocando', queue: 'Na fila', ivr: 'Na URA', app: 'Em uso', dialing: 'Chamando' };
-
-  function renderCalls() {
-    var calls = S.data.calls || [];
-    $('pop-call-count').textContent = calls.length ? nf(calls.length) : '';
-    if (!calls.length) {
-      $('pop-calls').innerHTML = '<p class="empty">Nenhuma ligação agora.</p>';
-      return;
-    }
-    $('pop-calls').innerHTML = calls.map(function (c) {
-      var from = partyHtml(c.from);
-      var tos = (c.to || []).map(function (p) { return partyHtml(p).main; }).filter(Boolean);
-      var line2;
-      if (c.state === 'ringing') line2 = 'tocando em ' + joinPt(tos);
-      else if (c.state === 'queue') line2 = 'esperando';
-      else if (c.state === 'ivr') line2 = 'no menu de atendimento';
-      else if (c.state === 'app' && c.to && c.to[0] && !c.to[0].ext) line2 = 'na ' + esc(String(c.to[0].name || 'aplicação').toLowerCase());
-      else if (tos.length) line2 = 'com ' + joinPt(tos);
-      else line2 = from.sub;
-      var via = [];
-      if (c.queue) via.push('fila ' + esc(queueName(c.queue)));
-      else if (c.trunk) via.push(esc(trunkName(c.trunk)));
-      var t = c.state === 'up' ? (c.answered_at || c.since) : c.since;
-      return '<div class="call c-' + c.state + '">' +
-        '<span class="dir ' + c.dir + '" title="' + DIR[c.dir] + '">' + ICON[c.dir] + '<span class="sr-only">' + DIR[c.dir] + '</span></span>' +
-        '<div class="parties"><b>' + from.main + '</b><span class="sub">' + [line2].concat(via).filter(Boolean).join(', ') + '</span></div>' +
-        '<div class="cstate"><b>' + (CSTATE[c.state] || c.state) + '</b>' + since(t, 'num') + '</div>' +
-      '</div>';
-    }).join('');
-  }
 
   /* ---------- filas ---------- */
   var MSTATE = { free: 'livre', busy: 'em ligação', ringing: 'tocando', paused: 'em pausa', offline: 'offline', unknown: 'sem status' };
