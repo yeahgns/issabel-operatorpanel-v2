@@ -51,6 +51,9 @@
   color-scheme: dark;
 }
 .pop *, .pop *::before, .pop *::after { box-sizing: border-box; }
+/* O tema do Issabel aplica content-box com regra de id; sem isto, padding e borda
+   somam por fora da largura e os cartões invadem o vizinho. */
+#pop-painel, #pop-painel *, #pop-painel *::before, #pop-painel *::after { box-sizing: border-box !important; }
 .pop h1, .pop h2, .pop h3, .pop p, .pop ul, .pop ol, .pop dl, .pop dd { margin: 0; padding: 0; }
 .pop ul, .pop ol { list-style: none; }
 .pop button, .pop input, .pop select { font: inherit; color: inherit; }
@@ -139,7 +142,7 @@
 /* ---------- quadro de ramais (o destaque) ---------- */
 .pop .exts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; align-content: start; }
 .pop .x {
-  position: relative; display: flex; flex-direction: column; gap: 1px; min-width: 0; width: 100%;
+  position: relative; display: flex; flex-direction: column; gap: 1px; min-width: 0;
   padding: 6px 8px 6px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
   overflow: hidden; cursor: pointer; text-align: left;
 }
@@ -231,15 +234,17 @@
 .pop .dot.s-dnd { background: var(--lost); }
 
 /* ---------- estacionamento ---------- */
-.pop .slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 4px; }
+.pop .slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 4px; }
 .pop .slot { border: 1px dashed var(--line); border-radius: 7px; padding: 3px 7px; font-size: 11.5px; color: var(--faint); min-width: 0; }
 .pop .slot b { font-weight: 700; color: var(--muted); margin-right: 5px; }
-.pop .slot.busy { grid-column: span 2; border: 1px solid var(--pause); background: var(--pause-bg); color: var(--ink); }
+.pop .slot.busy { grid-column: span 1; border: 1px solid var(--pause); background: var(--pause-bg); color: var(--ink); }
 .pop .slot.busy b { color: var(--pause); }
 .pop .slot.busy .who { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
 .pop .slot.busy .t { font-weight: 600; }
 .pop .slot.late { border-color: var(--lost); background: var(--lost-bg); }
 .pop .slot.late b, .pop .slot.late .t { color: var(--lost); }
+.pop .park-free { grid-column: 1 / -1; font-size: 12px; color: var(--muted); padding: 2px 1px; }
+.pop .park-free span { color: var(--faint); }
 
 /* ---------- filas ---------- */
 .pop .queues { display: flex; flex-direction: column; gap: 6px; }
@@ -341,5 +346,6 @@
 #pop-painel .btn.ghost:hover, #pop-painel .btn.ghost:focus { color: var(--ink); }
 #pop-painel .btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 #pop-painel .seg button { margin: 0; height: auto; min-width: 0; line-height: 1.3; border: 0; }
-#pop-painel .x { margin: 0; height: auto; min-height: 0; max-width: 100%; float: none; }
+#pop-painel .x { margin: 0; height: auto; min-height: 0; width: auto; float: none; }
+#pop-painel .exts { width: auto; justify-items: stretch; }
 #pop-painel p { margin: 0; }
