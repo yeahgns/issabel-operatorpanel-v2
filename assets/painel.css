@@ -30,26 +30,6 @@
   min-height: 100%;
   color-scheme: light;
 }
-.pop[data-theme="dark"] {
-  --brand: #3BA0FF;
-  --brand-ink: #82C3FF;
-  --brand-soft: #13304E;
-  --ink: #E4ECF5;
-  --muted: #9AABBF;
-  --faint: #6D7F96;
-  --line: #233349;
-  --line-soft: #1B293B;
-  --paper: #0D1621;
-  --surface: #13202F;
-  --ok: #3CC796;      --ok-bg: #10302A;
-  --lost: #F2707B;    --lost-bg: #3A1B22;   --lost-ink: #FFB3B9;
-  --warn: #E8B455;    --warn-bg: #36290F;   --warn-ink: #F6D9A0;
-  --ring: #F2B33D;    --ring-bg: #392A0C;   --ring-glow: rgba(242, 179, 61, .45);
-  --pause: #A592F2;   --pause-bg: #261F45;
-  --off: #3A4B61;
-  --shadow: none;
-  color-scheme: dark;
-}
 .pop *, .pop *::before, .pop *::after { box-sizing: border-box; }
 /* O tema do Issabel aplica content-box com regra de id; sem isto, padding e borda
    somam por fora da largura e os cartões invadem o vizinho. */
