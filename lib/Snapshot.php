@@ -98,6 +98,7 @@ class PopSnapshot
         if ($L['channels'] === null) throw new Exception('o Asterisk não devolveu a lista de canais (CoreShowChannels)');
 
         $chans = $this->parseChannels($L['channels']);
+        $this->fixInboundTrunks($ami, $chans);
         $this->trackAnswers($chans);
         $groups = $this->groupCalls($chans);
 
@@ -153,7 +154,9 @@ class PopSnapshot
         } catch (Exception $e) { $this->warnings[] = 'Não foi possível ler as filas do banco.'; }
 
         try {
-            foreach ($pdo->query('SELECT trunkid, name, tech, channelid, disabled FROM trunks') as $r) {
+            // SELECT * porque outcid não existe em todas as versões do IssabelPBX.
+            foreach ($pdo->query('SELECT * FROM trunks') as $r) {
+                $r += array('outcid' => '', 'disabled' => '');
                 $tech = strtolower((string) $r['tech']);
                 $prefix = array('sip' => 'SIP', 'pjsip' => 'PJSIP', 'iax' => 'IAX2', 'iax2' => 'IAX2', 'dahdi' => 'DAHDI', 'zap' => 'DAHDI');
                 $chan = isset($prefix[$tech]) ? $prefix[$tech] . '/' . $r['channelid'] : (string) $r['channelid'];
@@ -161,6 +164,7 @@ class PopSnapshot
                 $label = trim((string) $r['name']) !== '' ? $r['name'] : $chan;
                 $this->trunks[$id] = array(
                     'id' => $id, 'tech' => $tech, 'peer' => (string) $r['channelid'], 'channel' => $chan,
+                    'numbers' => self::trunkNumbers(array($r['name'], $r['channelid'], $r['outcid'])),
                     'label' => $this->label('trunk_labels', (string) $r['channelid'], $this->label('trunk_labels', $label, $label)),
                     'disabled' => strtolower((string) $r['disabled']) === 'on',
                 );
@@ -442,16 +446,24 @@ class PopSnapshot
         if (!$incoming && $num === null && strcasecmp($c['app'], 'Dial') === 0) $num = self::dialedNumber($c['appdata']);
         if (!$incoming && $num === null && preg_match('/^\+?\d{3,}$/', $c['exten']) && $c['exten'] !== $e) $num = $c['exten'];
 
-        if ($c['bridged']) $st = 'up';
+        $a = strtolower($c['app']);
+        $conf = $a === 'confbridge' || $a === 'meetme';
+        if ($conf) $st = 'app';               // ConfBridge também usa ponte, mas não há "com quem"
+        elseif ($c['bridged']) $st = 'up';
         elseif ($c['state'] === 'Ringing') $st = 'ringing';
         elseif ($c['state'] === 'Up') $st = 'app';
         else $st = 'dialing';
 
         $app = null;
-        if ($st === 'app') {
+        if ($conf) {
+            $room = explode(',', $c['appdata']);
+            $room = trim($room[0]);
+            if (!preg_match('/^\d+$/', $room)) $room = preg_match('/^\d+$/', $c['exten']) ? $c['exten'] : '';
+            $app = 'Conferência' . ($room !== '' ? ' ' . $room : '') . ($room !== '' && !empty($this->confs[$room]) ? ' (' . $this->confs[$room] . ')' : '');
+            $num = null; $name = null;
+        } elseif ($st === 'app') {
             $a = strtolower($c['app']);
             if (strpos($a, 'voicemail') === 0) $app = 'Caixa postal';
-            elseif ($a === 'confbridge' || $a === 'meetme') $app = 'Conferência';
             elseif ($a === 'park' || $a === 'parkedcall') $app = 'Estacionamento';
             elseif ($a === 'queue') $app = 'Fila';
             else $app = null;
@@ -516,6 +528,7 @@ class PopSnapshot
                 'since' => $call['since'], 'answered_at' => $answered,
                 'from' => $from, 'to' => array_values(array_filter($to)),
                 'queue' => $call['queue'], 'trunk' => $call['trunk'],
+                'did' => isset($o['did']) ? $o['did'] : null,   // número discado (entrada), para conferir no debug
             );
         }
         usort($out, function ($a, $b) { return $a['since'] - $b['since']; });
@@ -658,6 +671,57 @@ class PopSnapshot
                            'status' => $status, 'detail' => $detail, 'rtt_ms' => $rtt, 'calls' => isset($count[$id]) ? $count[$id] : 0);
         }
         return $out;
+    }
+
+    /*
+     * Por qual tronco a ligação entrou.
+     *
+     * O nome do canal (SIP/08004440001-...) diz qual peer o chan_sip escolheu, e quando
+     * vários troncos da mesma operadora usam o mesmo IP ele escolhe o primeiro peer daquele
+     * IP, não o número discado. O que identifica a linha é o DID (FROM_DID, gravado pelo
+     * IssabelPBX na entrada). Se o DID bate com o número de um único tronco (no nome, no
+     * peer ou no CallerID de saída), a ligação passa a ser desse tronco.
+     */
+    private function fixInboundTrunks(PopAmi $ami, array &$chans)
+    {
+        $asked = 0;
+        foreach ($chans as &$c) {
+            if ($c['trunk'] === null || $c['uid'] !== $c['linkedid'] || $asked >= 40) continue;  // só quem originou (entrada)
+            $asked++;
+            $did = null;
+            foreach (array('FROM_DID', 'CALLERID(dnid)') as $var) {
+                try {
+                    $r = $ami->send('Getvar', array('Channel' => $c['channel'], 'Variable' => $var));
+                } catch (Exception $e) { break; }
+                $v = isset($r['Value']) ? trim($r['Value']) : '';
+                if (isset($r['Response']) && $r['Response'] === 'Success' && preg_match('/\d{8,}/', $v)) { $did = $v; break; }
+            }
+            $c['did'] = $did;
+            if ($did === null) continue;
+            $key = substr(preg_replace('/\D/', '', $did), -8);
+            $match = array();
+            foreach ($this->trunks as $id => $t) if (in_array($key, $t['numbers'], true)) $match[] = $id;
+            if (count($match) === 1 && $match[0] !== $c['trunk']) {
+                $c['trunk_peer'] = $c['trunk'];
+                $c['trunk'] = $match[0];
+            }
+        }
+        unset($c);
+    }
+
+    /* Últimos 8 dígitos de cada número que aparece no nome, peer ou CallerID do tronco. */
+    private static function trunkNumbers(array $fields)
+    {
+        $out = array();
+        foreach ($fields as $f) {
+            if (preg_match_all('/\d[\d\s().-]{6,}\d/', (string) $f, $m)) {
+                foreach ($m[0] as $n) {
+                    $d = preg_replace('/\D/', '', $n);
+                    if (strlen($d) >= 8) $out[] = substr($d, -8);
+                }
+            }
+        }
+        return array_values(array_unique($out));
     }
 
     /* "sip:gw@200.100.10.5:5060;transport=udp" -> "200.100.10.5"; também aceita nome e IPv6 entre colchetes. */
