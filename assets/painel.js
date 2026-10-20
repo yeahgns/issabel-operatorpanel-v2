@@ -89,9 +89,6 @@
     return { main: phone(num), sub: clean };
   }
 
-  var ICON = {
-    vm: '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" style="vertical-align:-1px;margin-right:3px"><rect x="2" y="3.5" width="12" height="9" rx="1.5"/><path d="m2.6 4.6 5.4 4 5.4-4"/></svg>'
-  };
 
   /* ---------- estrutura fixa ---------- */
   root.innerHTML =
@@ -282,8 +279,8 @@
       h += '<div class="notice demo"><p>Demonstração: ramais, filas e ligações são fictícios e mudam sozinhos a cada poucos segundos.</p></div>';
     }
     if (d && d.warnings && d.warnings.length) {
-      h += '<div class="notice"><p>Parte do painel pode estar incompleta:<ul>' +
-        d.warnings.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul></p></div>';
+      h += '<div class="notice"><p>Parte do painel pode estar incompleta: ' +
+        d.warnings.map(function (w) { return esc(w); }).join('; ') + '</p></div>';
     }
     if ($('pop-notices').innerHTML !== h) { $('pop-notices').innerHTML = h; fit(); sizeExts(); }
   }
@@ -392,7 +389,6 @@
   function tileClass(e, ts) { return 'x st-' + e.state + (ts.late ? ' late' : ''); }
   function tileInner(e, ts) {
     var badges = '';
-    if (e.vm_new) badges += '<span class="badge vm" title="' + plural(e.vm_new, 'recado novo', 'recados novos') + ' na caixa postal">' + ICON.vm + e.vm_new + '</span>';
     if (e.ringing_too) badges += '<span class="badge" title="Outra ligação tocando">+1</span>';
     var ring = ts.late ? 'data-ring="1"' : '';
     return '<span class="x-top"><span class="x-num">' + esc(e.ext) + '</span><span class="x-name">' + esc(e.name || '') + '</span>' +
@@ -621,7 +617,6 @@
     if (e.agent) dev += '<dt>Aparelho</dt><dd>' + esc(e.agent) + '</dd>';
     if (e.rtt_ms != null) dev += '<dt>Resposta</dt><dd>' + e.rtt_ms + ' ms</dd>';
     dev += '<dt>Tecnologia</dt><dd>' + esc((e.tech || '').toUpperCase()) + '</dd>';
-    if (e.vm_new != null) dev += '<dt>Caixa postal</dt><dd>' + (e.vm_new ? plural(e.vm_new, 'recado novo', 'recados novos') : 'sem recados novos') + '</dd>';
 
     var title = esc(e.name || 'Ramal ' + e.ext) + '<span>Ramal ' + esc(e.ext) + '</span>';
     var body =
