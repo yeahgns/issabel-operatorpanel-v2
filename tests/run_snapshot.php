@@ -11,7 +11,7 @@ $db = new PDO("sqlite:$dbf");
 $db->exec("CREATE TABLE devices (id TEXT, tech TEXT, dial TEXT, description TEXT);
 CREATE TABLE users (extension TEXT, name TEXT);
 CREATE TABLE queues_config (extension TEXT, descr TEXT);
-CREATE TABLE trunks (trunkid INT, name TEXT, tech TEXT, channelid TEXT, disabled TEXT);
+CREATE TABLE trunks (trunkid INT, name TEXT, tech TEXT, channelid TEXT, outcid TEXT, disabled TEXT);
 CREATE TABLE meetme (exten TEXT, description TEXT);");
 $exts = array('200' => array('pjsip', 'Atendimento'), '201' => array('pjsip', 'Maria Souza'), '202' => array('sip', 'Julia Gomes'),
     '203' => array('pjsip', 'Gerlane Maia'), '204' => array('pjsip', 'Financeiro'), '205' => array('pjsip', 'Samuel Luciano'),
@@ -23,7 +23,7 @@ foreach ($exts as $e => $x) {
     $db->exec("INSERT INTO users VALUES ('$e', '{$x[1]}')");
 }
 $db->exec("INSERT INTO queues_config VALUES ('600','Comercial Geral'),('602','Suporte'),('603','Financeiro'),('610','Plantão');
-INSERT INTO trunks VALUES (1,'Operadora Vivo','sip','operadora','off'),(2,'Operadora antiga','sip','trunk2','off'),(3,'WhatsApp','pjsip','whatsapp','off'),(4,'Backup','sip','backup','on');
+INSERT INTO trunks VALUES (1,'08004440001','sip','operadora','','off'),(2,'Operadora antiga','sip','trunk2','','off'),(3,'WhatsApp','pjsip','whatsapp','','off'),(4,'Backup','sip','backup','','on'),(5,'1- (19)3909-9662','sip','linha1','','off');
 INSERT INTO meetme VALUES ('800','Sala de reunião');");
 
 $t0 = strtotime('today 08:00');
