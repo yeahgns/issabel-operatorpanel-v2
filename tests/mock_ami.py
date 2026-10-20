@@ -55,6 +55,8 @@ LISTS = {
         chan('SIP/operadora-00000012', '1700000300.40', '1700000300.40', 'Up', 'Queue', '602,t,,,300', '11955554444', '', ctx='ext-queues', exten='602', dur='00:00:41'),
         # 5) 203 ouvindo a caixa postal
         chan('PJSIP/203-0000002e', '1700000400.50', '1700000400.50', 'Up', 'VoiceMailMain', '203@default', '203', 'Gerlane', ctx='app-vmmain', exten='s', dur='00:00:30'),
+        # 7) 215 numa conferência (ConfBridge também fica em ponte)
+        chan('PJSIP/215-00000030', '1700000600.70', '1700000600.70', 'Up', 'ConfBridge', '800,,,', '215', 'Sarah', '', '', ctx='ext-meetme', exten='800', dur='00:02:10', bridge='conf-800'),
         # 6) DID direto para o 204, tocando
         chan('SIP/trunk2-00000013', '1700000500.60', '1700000500.60', 'Ring', 'Dial', 'PJSIP/204,20,tr', '21988887777', 'JOAO', ctx='from-did-direct', exten='204', dur='00:00:27'),
         chan('PJSIP/204-0000002f', '1700000500.61', '1700000500.60', 'Ringing', 'AppDial', '(Outgoing Line)', '204', 'Financeiro', '21988887777', 'JOAO', dur='00:00:27'),
@@ -91,16 +93,22 @@ class H(socketserver.StreamRequestHandler):
 
     def handle(self):
         self.wfile.write(b'Asterisk Call Manager/7.0.3\r\n')
-        pkt = {}
+        pkt = {}; chan_of = {}; pkt_var = {}
         for raw in self.rfile:
             line = raw.decode().rstrip('\r\n')
             if line:
                 k, _, v = line.partition(':'); pkt[k] = v.strip(); continue
             if not pkt: continue
             a, aid = pkt.get('Action'), pkt.get('ActionID', '')
+            chan_of[aid] = pkt.get('Channel', ''); pkt_var[aid] = pkt.get('Variable', '')
             pkt = {}
             if a == 'Login':
                 self.send({'Response': 'Success', 'ActionID': aid, 'Message': 'Authentication accepted'}); continue
+            if a == 'Getvar':
+                # A ligação 1 entra pelo peer "operadora", mas foi para o número da linha 1 (outro tronco).
+                dids = {'SIP/operadora-00000010': '1939099662'}
+                v = dids.get(chan_of.get(aid, ''), '') if pkt_var.get(aid) == 'FROM_DID' else ''
+                self.send({'Response': 'Success', 'ActionID': aid, 'Variable': pkt_var.get(aid, ''), 'Value': v}); continue
             if a == 'Logoff':
                 self.send({'Response': 'Goodbye', 'ActionID': aid}); return
             data = LISTS.get(a)
