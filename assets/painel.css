@@ -219,6 +219,11 @@
 }
 .pop .chips li.empty { grid-column: 1 / -1; border: 0; background: none; }
 .pop .chips .cl { min-width: 0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.pop .chips .cm { min-width: 0; flex: 1; display: flex; flex-direction: column; line-height: 1.25; }
+.pop .chips .cm .cl { flex: none; }
+.pop .chips .ci { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.pop .chips .ci.none { color: var(--faint); }
+.pop .chips li.t-offline .ci { color: var(--lost); opacity: .8; }
 .pop .chips .cn { flex: none; font-size: 11px; font-weight: 700; color: var(--brand-ink); background: var(--brand-soft); border-radius: 4px; padding: 0 5px; line-height: 16px; }
 .pop .chips .cn.bad { color: var(--lost); background: var(--lost-bg); }
 .pop .chips .cn.muted { color: var(--faint); background: none; font-weight: 500; }
