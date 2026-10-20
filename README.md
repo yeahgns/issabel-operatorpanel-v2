@@ -22,7 +22,7 @@ O repositório é clonado direto na pasta de módulos do Issabel. O nome da past
 
 ```bash
 cd /var/www/html/modules
-git clone https://github.com/yeahgns/issabel-operatorpanel-v2.git painel_operador
+git clone https://github.com/yeahgns/issabel-operatorpanel-v2.git
 cd painel_operador
 bash install.sh
 ```
