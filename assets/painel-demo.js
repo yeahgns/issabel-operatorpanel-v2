@@ -32,7 +32,6 @@
     { id: 't4', label: 'Backup', channel: 'SIP/backup', ip: null, tech: 'sip', status: 'disabled', detail: 'desativado no PABX', rtt_ms: null }
   ];
   var NAMES = ['', '', '', 'MERCADO BOM', 'JOAO P', 'CONSTRUTORA ALFA', 'CLINICA VIDA', '', 'ANA C', 'AUTO PECAS SUL'];
-  var VM = { '201': 2, '204': 1 };
 
   var name = {}, qByNum = {};
   EXTS.forEach(function (e) { name[e[0]] = e[1]; });
@@ -185,7 +184,7 @@
       var dev = DEVICE[x] || [];
       return { ext: x, name: e[1], tech: e[2] || 'pjsip', hidden: false, state: st, online: st !== 'offline' && st !== 'virtual' ? true : (st === 'virtual' ? null : false),
                dnd: !!DND[x], ringing_too: up > 0 && ringing > 0, ip: OFFLINE[x] ? null : dev[0] || null, agent: dev[1] || null,
-               rtt_ms: dev[2] != null ? dev[2] : null, vm_new: VM[x] != null ? VM[x] : (e[2] === 'custom' ? null : 0), calls: items };
+               rtt_ms: dev[2] != null ? dev[2] : null, calls: items };
     });
     var stateOf = {};
     extensions.forEach(function (e) { stateOf[e.ext] = e.state; });
