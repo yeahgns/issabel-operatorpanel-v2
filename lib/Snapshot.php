@@ -603,12 +603,16 @@ class PopSnapshot
 
     private function buildTrunks(array $L, array $calls)
     {
-        $sip = array(); $iax = array(); $pj = array(); $pjRtt = array(); $reg = array();
+        $sip = array(); $iax = array(); $pj = array(); $pjRtt = array(); $pjHost = array(); $reg = array();
         foreach ((array) $L['sippeers'] as $e) if (isset($e['ObjectName'])) $sip[$e['ObjectName']] = $e;
         foreach ((array) $L['iaxpeers'] as $e) if (isset($e['ObjectName'])) $iax[$e['ObjectName']] = $e;
         foreach ((array) $L['endpoints'] as $e) if (isset($e['ObjectName'])) $pj[$e['ObjectName']] = $e;
         foreach ((array) $L['contacts'] as $e) {
             if (!empty($e['Endpoint']) && !empty($e['RoundtripUsec']) && is_numeric($e['RoundtripUsec'])) $pjRtt[$e['Endpoint']] = (int) round($e['RoundtripUsec'] / 1000);
+            if (!empty($e['Endpoint']) && !isset($pjHost[$e['Endpoint']]) && !empty($e['Uri'])) {
+                $h = self::uriHost($e['Uri']);
+                if ($h !== null) $pjHost[$e['Endpoint']] = $h;
+            }
         }
         foreach ((array) $L['pjreg'] as $e) if (isset($e['ObjectName'])) $reg[$e['ObjectName']] = $e;
 
@@ -621,13 +625,14 @@ class PopSnapshot
 
         $out = array();
         foreach ($this->trunks as $id => $t) {
-            $status = 'unknown'; $detail = 'sem monitoramento'; $rtt = null;
+            $status = 'unknown'; $detail = 'sem monitoramento'; $rtt = null; $ip = null;
             if ($t['disabled']) { $status = 'disabled'; $detail = 'desativado no PABX'; }
             elseif ($t['tech'] === 'sip' || $t['tech'] === 'iax' || $t['tech'] === 'iax2') {
                 $p = $t['tech'] === 'sip' ? (isset($sip[$t['peer']]) ? $sip[$t['peer']] : null) : (isset($iax[$t['peer']]) ? $iax[$t['peer']] : null);
                 if ($p) {
                     $st = isset($p['Status']) ? $p['Status'] : '';
                     $ipa = isset($p['IPaddress']) ? $p['IPaddress'] : '-none-';
+                    if ($ipa !== '-none-' && $ipa !== '' && $ipa !== '(null)') $ip = $ipa;
                     if (preg_match('/^OK/i', $st)) { $status = 'online'; $detail = 'respondendo'; }
                     elseif (preg_match('/^LAGGED/i', $st)) { $status = 'warn'; $detail = 'respondendo com atraso'; }
                     elseif (preg_match('/^UNREACHABLE/i', $st)) { $status = 'offline'; $detail = 'sem resposta da operadora'; }
@@ -641,6 +646,7 @@ class PopSnapshot
                     $status = $p['DeviceState'] === 'Unavailable' ? 'offline' : 'online';
                     $detail = $status === 'online' ? 'respondendo' : 'sem resposta da operadora';
                     if (isset($pjRtt[$t['peer']])) $rtt = $pjRtt[$t['peer']];
+                    if (isset($pjHost[$t['peer']])) $ip = $pjHost[$t['peer']];
                 } else { $detail = 'não encontrado no Asterisk'; }
                 if (isset($reg[$t['peer']])) {
                     $rs = isset($reg[$t['peer']]['Status']) ? $reg[$t['peer']]['Status'] : '';
@@ -648,10 +654,22 @@ class PopSnapshot
                     elseif ($rs !== '') { $status = 'offline'; $detail = $rs === 'Rejected' ? 'registro recusado pela operadora' : 'não registrado'; }
                 }
             }
-            $out[] = array('id' => $id, 'label' => $t['label'], 'channel' => $t['channel'], 'tech' => $t['tech'],
+            $out[] = array('id' => $id, 'label' => $t['label'], 'channel' => $t['channel'], 'tech' => $t['tech'], 'ip' => $ip,
                            'status' => $status, 'detail' => $detail, 'rtt_ms' => $rtt, 'calls' => isset($count[$id]) ? $count[$id] : 0);
         }
         return $out;
+    }
+
+    /* "sip:gw@200.100.10.5:5060;transport=udp" -> "200.100.10.5"; também aceita nome e IPv6 entre colchetes. */
+    public static function uriHost($uri)
+    {
+        $u = preg_replace('/^<?sips?:/i', '', trim((string) $uri));
+        $at = strrpos($u, '@');
+        if ($at !== false) $u = substr($u, $at + 1);
+        if (preg_match('/^\[([0-9a-f:.]+)\]/i', $u, $m)) return $m[1];
+        $u = preg_split('/[:;>?\/]/', $u, 2);
+        $h = trim($u[0]);
+        return $h !== '' ? $h : null;
     }
 
     /* ---------------------------------------------------------------- estacionamento e conferências */
