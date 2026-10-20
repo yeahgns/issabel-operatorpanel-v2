@@ -26,10 +26,10 @@
     { num: '610', name: 'Plantão', ring: 'all', members: ['210', '250'], base: [0, 0, 0, 0] }
   ];
   var TRUNKS = [
-    { id: 't1', label: 'Operadora Vivo', channel: 'SIP/vivo-sip', tech: 'sip', status: 'online', detail: 'respondendo', rtt_ms: 23 },
-    { id: 't2', label: 'WhatsApp Business', channel: 'PJSIP/whatsapp', tech: 'pjsip', status: 'online', detail: 'registrado', rtt_ms: 41 },
-    { id: 't3', label: 'Operadora Claro', channel: 'SIP/claro', tech: 'sip', status: 'offline', detail: 'sem resposta da operadora', rtt_ms: null },
-    { id: 't4', label: 'Backup', channel: 'SIP/backup', tech: 'sip', status: 'disabled', detail: 'desativado no PABX', rtt_ms: null }
+    { id: 't1', label: 'Operadora Vivo', channel: 'SIP/vivo-sip', ip: '203.0.113.10', tech: 'sip', status: 'online', detail: 'respondendo', rtt_ms: 23 },
+    { id: 't2', label: 'WhatsApp Business', channel: 'PJSIP/whatsapp', ip: 'sip.gateway.exemplo.com', tech: 'pjsip', status: 'online', detail: 'registrado', rtt_ms: 41 },
+    { id: 't3', label: 'Operadora Claro', channel: 'SIP/claro', ip: '198.51.100.7', tech: 'sip', status: 'offline', detail: 'sem resposta da operadora', rtt_ms: null },
+    { id: 't4', label: 'Backup', channel: 'SIP/backup', ip: null, tech: 'sip', status: 'disabled', detail: 'desativado no PABX', rtt_ms: null }
   ];
   var NAMES = ['', '', '', 'MERCADO BOM', 'JOAO P', 'CONSTRUTORA ALFA', 'CLINICA VIDA', '', 'ANA C', 'AUTO PECAS SUL'];
   var VM = { '201': 2, '204': 1 };
