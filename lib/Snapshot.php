@@ -86,7 +86,6 @@ class PopSnapshot
             'parked'    => 'ParkedCalls',
             'confbridge'=> 'ConfbridgeListRooms',
             'meetme'    => 'MeetmeListRooms',
-            'vm'        => 'VoicemailUsersList',
         ) as $k => $action) {
             try {
                 $L[$k] = $ami->lst($action);
@@ -354,7 +353,7 @@ class PopSnapshot
 
     private function buildExtensions(array $L, array $chans, array $calls)
     {
-        $pj = array(); $pjContacts = array(); $sip = array(); $iax = array(); $hint = array(); $dnd = array(); $vm = array();
+        $pj = array(); $pjContacts = array(); $sip = array(); $iax = array(); $hint = array(); $dnd = array();
         foreach ((array) $L['endpoints'] as $e) if (isset($e['ObjectName'])) $pj[$e['ObjectName']] = $e;
         foreach ((array) $L['contacts'] as $e) {
             $ep = isset($e['Endpoint']) ? $e['Endpoint'] : (isset($e['Aor']) ? $e['Aor'] : null);
@@ -369,9 +368,6 @@ class PopSnapshot
             if (isset($e['Device']) && preg_match('/^Custom:DND(\d+)$/i', $e['Device'], $m)) {
                 $dnd[$m[1]] = in_array(strtoupper($e['State']), array('BUSY', 'INUSE', 'UNAVAILABLE', 'ONHOLD'), true);
             }
-        }
-        foreach ((array) $L['vm'] as $e) {
-            if (isset($e['VoiceMailbox'])) $vm[$e['VoiceMailbox']] = (int) (isset($e['NewMessageCount']) ? $e['NewMessageCount'] : 0);
         }
 
         // canais por ramal
@@ -431,7 +427,6 @@ class PopSnapshot
                 'state' => $state, 'online' => $online, 'dnd' => !empty($dnd[$e]),
                 'ringing_too' => $hasUp && $hasRinging,
                 'ip' => $ip, 'agent' => $agent, 'rtt_ms' => $rtt,
-                'vm_new' => isset($vm[$e]) ? $vm[$e] : null,
                 'calls' => $items,
             );
         }
