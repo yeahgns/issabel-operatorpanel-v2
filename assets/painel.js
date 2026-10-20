@@ -525,10 +525,11 @@
     $('pop-trunk-count').textContent = all ? on + ' de ' + all : '';
     if (!ts.length) { $('pop-trunks').innerHTML = '<li class="empty">Nenhum tronco cadastrado.</li>'; return; }
     $('pop-trunks').innerHTML = ts.map(function (t) {
-      var title = t.label + ' (' + t.channel + '): ' + t.detail + (t.rtt_ms != null ? ', ' + t.rtt_ms + ' ms' : '') +
+      var title = t.label + ' (' + t.channel + (t.ip ? ', ' + t.ip : '') + '): ' + t.detail + (t.rtt_ms != null ? ', ' + t.rtt_ms + ' ms' : '') +
         (t.calls ? ', ' + plural(t.calls, 'ligação', 'ligações') + ' agora' : '');
       return '<li class="t-' + t.status + '" title="' + esc(title) + '"><span class="dot ' + (TSTATE[t.status] || '') + '" aria-hidden="true"></span>' +
-        '<span class="cl">' + esc(t.label) + '</span>' +
+        '<span class="cm"><span class="cl">' + esc(t.label) + '</span>' +
+        '<span class="ci' + (t.ip ? '' : ' none') + '">' + (t.ip ? esc(t.ip) : 'sem endereço') + '</span></span>' +
         (t.status === 'offline' ? '<span class="cn bad">fora</span>' : (t.calls ? '<span class="cn">' + t.calls + '</span>' : '')) + '</li>';
     }).join('');
   }
