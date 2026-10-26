@@ -13,7 +13,7 @@ Testado para Issabel 5, Asterisk 18, Rocky Linux 8, PHP 7.4. Sem dependências, 
 - **Filas**: quem está esperando e há quanto tempo, quem atende (livre, ocupado, tocando, em pausa com o motivo) e os números do dia: atendidas, perdidas, porcentagem atendida no prazo e espera média.
 - **Troncos**, embaixo dos ramais como no painel original: respondendo ou fora do ar, com latência e quantas ligações estão passando por cada um agora.
 - **Estacionamento** (só as vagas ocupadas aparecem; as livres viram um resumo) e **conferências**.
-- **Detalhes do ramal** num clique: IP, modelo do aparelho, latência, filas em que está, recados novos na caixa postal.
+- **Detalhes do ramal** num clique: IP, modelo do aparelho, latência, filas em que está.
 - Tela cheia, para deixar numa TV da recepção.
 
 ## Instalação
@@ -22,7 +22,7 @@ O repositório é clonado direto na pasta de módulos do Issabel. O nome da past
 
 ```bash
 cd /var/www/html/modules
-git clone https://github.com/yeahgns/issabel-operatorpanel-v2.git painel_operador
+git clone https://github.com/yeahgns/issabel-painel-operador.git painel_operador
 cd painel_operador
 bash install.sh
 ```
@@ -43,6 +43,17 @@ O `install.sh` não altera nenhum arquivo do repositório, então o `git pull` n
 bash /var/www/html/modules/painel_operador/uninstall.sh   # --purge apaga também a configuração
 rm -rf /var/www/html/modules/painel_operador
 ```
+
+### Em várias VMs (Ansible)
+
+O playbook `painel_operador.yml` (fica junto do seu `inventory.ini`, fora deste repositório) instala ou atualiza a partir de uma **tag**, nunca do `main`, para todas as VMs ficarem na mesma versão testada:
+
+```bash
+git tag v0.3.4 && git push origin main --tags          # depois de testar na sua VM
+ansible-playbook -i inventory.ini painel_operador.yml -e painel_versao=v0.3.4 --limit "@piloto.txt" --forks 20
+```
+
+Ele pula VMs que não são Issabel 5 e as que já estão na versão, volta sozinho para a versão anterior se o `install.sh` falhar, trabalha em lotes de 20 (para tudo se mais de 10% de um lote falhar) e grava o resultado de cada VM em `painel_relatorio.csv`. Para voltar a frota, rode de novo com a tag anterior.
 
 ## O que o instalador faz no sistema
 
@@ -77,7 +88,8 @@ A cada 2 segundos o navegador pede um JSON ao próprio módulo (`index.php?menu=
 O servidor monta o estado com:
 
 - **banco asterisk**: quais ramais, filas, troncos e conferências existem, e os nomes;
-- **AMI**, com uma conexão curta e `Events: off`: `CoreShowChannels`, `QueueStatus`, `PJSIPShowEndpoints`, `PJSIPShowContacts`, `SIPpeers`, `ExtensionStateList`, `DeviceStateList` (não perturbe), `ParkedCalls`, `Parkinglots`, `ConfbridgeListRooms`, `VoicemailUsersList` e `PJSIPShowRegistrationsOutbound`;
+- **AMI**, com uma conexão curta e `Events: off`: `CoreShowChannels`, `QueueStatus`, `PJSIPShowEndpoints`, `PJSIPShowContacts`, `SIPpeers`, `ExtensionStateList`, `DeviceStateList` (não perturbe), `ParkedCalls`, `Parkinglots`, `ConfbridgeListRooms` e `PJSIPShowRegistrationsOutbound`;
+- `Getvar FROM_DID` só nas ligações que estão entrando, para saber por qual linha (tronco) elas vieram;
 - **queue_log**, lido de trás para frente até a meia-noite, para os números do dia.
 
 O resultado fica em cache por 1 segundo e é compartilhado por todos os navegadores abertos: dez telas abertas não viram dez conexões no AMI a cada ciclo. O painel antigo mantinha uma conexão AMI aberta por navegador, o tempo todo.
