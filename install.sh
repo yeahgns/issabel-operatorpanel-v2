@@ -11,9 +11,11 @@ SHARE="/usr/share/issabel/module_installer/$ID"
 CONF=/etc/issabel/painel-operador.conf.php
 APACHE="/etc/httpd/conf.d/$ID.conf"
 
-say()  { echo -e "\033[1;34m==>\033[0m $*"; }
-warn() { echo -e "   \033[1;33mAviso:\033[0m $*"; }
-fail() { echo -e "\033[1;31mErro:\033[0m $*" >&2; exit 1; }
+# Cor só no terminal; pelo Ansible (ou redirecionado para log) sai texto puro.
+if [ -t 1 ]; then B='\033[1;34m'; Y='\033[1;33m'; R='\033[1;31m'; N='\033[0m'; else B=''; Y=''; R=''; N=''; fi
+say()  { echo -e "${B}==>${N} $*"; }
+warn() { echo -e "   ${Y}Aviso:${N} $*"; }
+fail() { echo -e "${R}Erro:${N} $*" >&2; exit 1; }
 
 [ "$(id -u)" -eq 0 ] || fail "rode como root."
 [[ "$ID" =~ ^[a-z][a-z0-9_]*$ ]] || fail "o nome da pasta ($ID) vira o nome do menu: use só minúsculas, números e _ (ex.: painel_operador). Renomeie com: mv \"$DIR\" /var/www/html/modules/painel_operador"
