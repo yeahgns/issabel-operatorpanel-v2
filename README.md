@@ -46,14 +46,13 @@ rm -rf /var/www/html/modules/painel_operador
 
 ### Em várias VMs (Ansible)
 
-O playbook `painel_operador.yml` (fica junto do seu `inventory.ini`, fora deste repositório) instala ou atualiza a partir de uma **tag**, nunca do `main`, para todas as VMs ficarem na mesma versão testada:
+O playbook `painel_operador.yml` (fica junto do seu `inventory.ini`, fora deste repositório) faz o equivalente a `git pull && bash install.sh` em todas as VMs de uma vez, a partir do `main`:
 
 ```bash
-git tag v0.3.4 && git push origin main --tags          # depois de testar na sua VM
-ansible-playbook -i inventory.ini painel_operador.yml -e painel_versao=v0.3.4 --limit "@piloto.txt" --forks 20
+ansible-playbook -i inventory.ini painel_operador.yml --limit "@piloto.txt" --forks 20
 ```
 
-Ele pula VMs que não são Issabel 5 e as que já estão na versão, volta sozinho para a versão anterior se o `install.sh` falhar, trabalha em lotes de 20 (para tudo se mais de 10% de um lote falhar) e grava o resultado de cada VM em `painel_relatorio.csv`. Para voltar a frota, rode de novo com a tag anterior.
+Ele pula VMs que não são Issabel 5 e as que já estão atualizadas, volta sozinho para a versão anterior se o `install.sh` falhar, trabalha em lotes de 20 (para tudo se mais de 10% de um lote falhar) e grava o resultado de cada VM em `painel_relatorio.csv`.
 
 ## O que o instalador faz no sistema
 
